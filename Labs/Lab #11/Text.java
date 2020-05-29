@@ -1,125 +1,129 @@
-import java.io.*;
-import java.net.*;
-import java.util.*;
-import javax.swing.*;
+//HIDE
+import java.awt.Dimension;
+import java.awt.Graphics2D;
 
-public class Text
+import javax.swing.JLabel;
+
+public class Text implements Shape
 {
-    private ArrayList<String> words;
+    private Color color = Color.BLACK;
+    private JLabel label = new JLabel();
+    private double x;
+    private double y;
+    private double xGrow;
+    private double yGrow;
 
-    public Text()
+    /**
+        Constructs a text at a given location.
+        @param x the leftmost x-position of the shape
+        @param y the topmost y-position of the shape
+        @param message the text string
+    */
+    public Text(double x, double y, String message)
     {
-        words = new ArrayList<String>();
+        this.x = x;
+        this.y = y;
+        label.setText(message);
     }
 
-    public void removeAdjacentDuplicates()
+
+    /**
+        Gets the leftmost x-position of the bounding box.
+        @return the leftmost x-position
+    */
+    public int getX()
     {
-        int i = 1;
-
-        while (i < words.size())
-        {
-            if (words.get(i - 1).equals(words.get(i)))
-            {
-                words.remove(i);
-                i = i - 1;
-            }
-
-            else
-            {
-                i = i + 1;
-            }
-        }
-    }
-
-    public void removeAllDuplicates()
-    {
-        int i = 1;
-        ArrayList<String> strings = new ArrayList<String>();
-        strings.add(words.get(0));
-
-        while (i < words.size())
-        {
-            if (strings.contains(words.get(i)))
-            {
-                words.remove(i);
-            }
-
-            else
-            {
-                i = i + 1;
-            }
-
-            strings.add(words.get(i - 1));
-        }
+        return (int) Math.round(x - xGrow) ;
     }
 
     /**
-    Gets the words from this text.
-    @return an array list containing the words
-     */
-    public ArrayList<String> getWords()
+        Gets the topmost y-position of the bounding box.
+        @return the topmost y-position
+    */
+    public int getY()
     {
-        return words;
+        return (int) Math.round(y - yGrow);
     }
 
-    // Don't look at the code below...
 
     /**
-    Lets the user pick a file for loading
-     */
-    public void pick()
+        Gets the width of the bounding box.
+        @return the width
+    */
+    public int getWidth()
     {
-        JFileChooser chooser = new JFileChooser(".");
-        if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION)
-        {
-            load(chooser.getSelectedFile().getAbsolutePath());
-        }
-    }   
-
-    /**
-    Loads a file.
-    @param source a URL or file name
-     */
-    public boolean load(String source)
-    {
-        if (source == null) return false;
-        try
-        {
-            Scanner in;
-            if (source.startsWith("http://"))
-            {
-                in = new Scanner(new URL(source).openStream());
-            }
-            else
-            {
-                in = new Scanner(new FileReader(source));
-            }
-            in.useDelimiter("[^\\p{L}]");
-            words = new ArrayList<String>();
-            while (in.hasNext())
-            {
-                String word = in.next();
-                if (word.length() > 0)
-                    words.add(word);
-            }
-            return true;
-        }
-        catch (IOException ex)
-        {
-            ex.printStackTrace();
-            return false;
-        }
+        return (int) Math.round(label.getPreferredSize().getWidth() + 2 * xGrow);
     }
 
     /**
-    Displays the words in a text area
-     */
-    public void explore()
+        Gets the height of the bounding box.
+        @return the height
+    */
+    public int getHeight()
     {
-        JTextArea area = new JTextArea(20, 40);
-        JScrollPane scroll = new JScrollPane(area);
-        for (String word : words)
-            area.append(word + "\n");
-        JOptionPane.showMessageDialog(null, scroll);    
+        return (int) Math.round(label.getPreferredSize().getHeight() + 2 * yGrow);
+    }
+
+    /**
+        Moves this text by a given amount.
+        @param dx the amount by which to move in x-direction
+        @param dy the amount by which to move in y-direction
+    */
+    public void translate(double dx, double dy)
+    {
+        x += dx;
+        y += dy;
+        Canvas.getInstance().repaint();
+    }
+
+    /**
+        Resizes this text both horizontally and vertically.
+        @param dw the amount by which to resize the width on each side
+        @param dw the amount by which to resize the height on each side
+    */
+    public void grow(double dw, double dh)
+    {
+        xGrow += dw;
+        yGrow += dh;
+        Canvas.getInstance().repaint();
+    }
+
+    /**
+        Sets the color for drawing this text.
+        @param newColor the new color
+    */
+    public void setColor(Color newColor)
+    {
+        color = newColor;
+        Canvas.getInstance().repaint();
+    }
+
+    /**
+        Shows this text on the canvas.
+    */
+    public void draw()
+    {
+        Canvas.getInstance().show(this);
+    }
+
+    public String toString()
+    {
+        return "Text[x=" + getX() + ",y=" + getY() + ",message=" + label.getText() + "]";
+    }
+
+    public void paintShape(Graphics2D g2)
+    {
+        if (color != null)
+        {
+            label.setForeground(new java.awt.Color((int) color.getRed(), (int) color.getGreen(), (int) color.getBlue()));
+            Dimension dim = label.getPreferredSize();
+            if (dim.width > 0 && dim.height > 0)
+            {
+                label.setBounds(0, 0, dim.width, dim.height);
+                g2.translate(getX(), getY());
+                g2.scale(getWidth() / dim.width, getHeight() / dim.height);
+                label.paint(g2);
+            }
+        }
     }
 }
